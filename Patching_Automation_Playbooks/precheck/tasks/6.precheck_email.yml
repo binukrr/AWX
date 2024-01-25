@@ -1,0 +1,32 @@
+---
+- copy: content="OS File system and ILO IP Address \n" dest={{pre_folder}}/{{s_name}}.txt
+
+- shell: cat {{pre_folder}}/ilo.txt | grep -w 'IP_ADDRESS VALUE' | cut -d '"' -f 2 >> {{pre_folder}}/{{s_name}}.txt
+  when: ansible_system_vendor == 'HP' or ansible_system_vendor == 'HPE'
+
+- shell: df -hTP -t ext4 >>  {{pre_folder}}/{{s_name}}.txt
+
+- shell: df -hTP -t ext4 | wc -l 
+  register: ext4
+
+- shell: df -hTP -t nfs | wc -l
+  register: nfs
+
+- shell: df -hTP -t ocfs2 | wc -l
+  register: ocfs2
+
+- name: Collecting information for send e-mail
+  mail:
+    subject: Pre-check {{ ansible_hostname }}
+    body: "Pre-check for {{ ansible_hostname }} has been successfully taken and OS_File System & ILO
+           details attached.\n\n\
+           Hostname: {{ansible_hostname}}\n\n
+           Server Type: {{ ansible_system_vendor }}\n\n
+           OS_version: {{ansible_distribution_version}}\n\n
+           Kernel_version: {{ansible_kernel}}\n\n
+           Filesystem count of EXT4: {{ext4.stdout}}\n\n
+           Filesystem count of NFS: {{nfs.stdout}}\n\n
+           Filesystem count of OCFS2: {{ocfs2.stdout}}"
+    to: Server Ops_Linux <ServerOps_Linux@herbalife.com>
+    attach:
+    - /x01/pre_post_checks/{{ansible_date_time.date}}/{{s_name}}.txt

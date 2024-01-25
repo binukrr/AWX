@@ -1,0 +1,14 @@
+- name: Collecting HBA status
+  shell: /usr/bin/adapter_info > {{post.stdout}}/adapter_info_post
+
+- name: Backup the status of bond0
+  shell: cat /proc/net/bonding/bond0 > {{post.stdout}}/bond0_post
+  when: ansible_bond0 is defined
+
+- name: Backup the status of bond1
+  shell: cat /proc/net/bonding/bond1 > {{post.stdout}}/bond1_post
+  when: ansible_bond1 is defined
+
+- name: Backup the status of bond2
+  shell: cat /proc/net/bonding/bond2  > {{post.stdout}}/bond2_post
+  when: ansible_bond2 is defined

@@ -1,0 +1,8 @@
+---
+- name: Playbook for take the prechecks 
+  hosts: all
+  remote_user: svclnx
+  become: yes
+
+  roles: 
+    - precheck

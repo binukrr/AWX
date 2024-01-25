@@ -1,0 +1,34 @@
+---
+- name: Collecting File system information.
+  shell: df -hTP |egrep 'ext4|nfs|ocfs2'| awk -v OFS='\t\t' '{print $1,$2,$7}' | sort > {{pre_folder}}/df-h_pre.txt
+
+- name: Collecting the mount details.
+  shell: cat /proc/mounts | sort > {{pre_folder}}/mounts-pre
+
+- name: Collecting currently running service details(OEL6)
+  shell: /sbin/service --status-all 2>/dev/null | grep 'is running' | grep -v Check | awk '{print $1}' | sort > {{pre_folder}}/service-pre
+  args:
+    warn: false
+  when: ansible_distribution_major_version == '6'
+
+- name: Collecting currently running service details(OEL7)
+  shell: /usr/bin/systemctl list-units --type service --all | grep active | grep running | sort > {{pre_folder}}/service-pre
+  when: ansible_distribution_major_version == '7'
+
+- name: Collecting IP address
+  shell: /sbin/ip a 2>/dev/null > {{pre_folder}}/ip_address_pre
+
+- name:  Backup dmesgs
+  shell: dmesg > {{pre_folder}}/dmesg
+
+- name: Collecting OS & kernel version
+  copy: content='Kernel_version:{{ ansible_kernel}}\n' dest={{pre_folder}}/OS_Kernel_ver_pre
+
+- name: Backup sysctl.conf
+  copy: src=/etc/sysctl.conf dest={{ pre_folder }}/sysctl.conf_pre remote_src=yes
+
+- name: Backup fstab
+  copy: src=/etc/fstab dest={{ pre_folder }}/ remote_src=yes
+
+- name: Backup up resolve.conf
+  copy: src=/etc/resolv.conf dest={{pre_folder}}/resolv.conf_pre remote_src=yes

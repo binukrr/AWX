@@ -1,0 +1,18 @@
+---
+- name: Playbook for unmount ocfs2 volumes
+  hosts: all
+  remote_user: svclnx
+  become: yes
+
+  tasks:
+    - name: Checking for OCFS2 volumes. 
+      shell: df -hTP -t ocfs2 | wc -l
+      register: ocfs2_count
+
+    - name: Unmount OCFS2 volumes.
+      service: 
+        name: ocfs2
+        state: stopped
+      async: 3600
+      poll: 60
+      when: ocfs2_count.stdout != "0"

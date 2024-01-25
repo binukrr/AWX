@@ -1,0 +1,37 @@
+---
+- name: Checking for latest pre-checks -- test
+  shell: ls -ltr /x01/pre_post_checks/
+  register: pre
+  ignore_errors: yes
+
+#- debug:
+#    msg: Pre-checks not found on {{ ansible_hostname }}. Exiting Playbook...
+#  when: pre.rc != 0
+
+- name: Pre-checks not found on {{ ansible_hostname }}. Exiting Playbook...
+  fail: 
+    msg: Pre-checks not found on {{ ansible_hostname }}. Exiting Playbook...
+  when: pre.stdout == "total 0" or pre.rc != 0 
+
+- shell: ls -ltr /x01/pre_post_checks | awk -F ' ' '{print $9}' | tail -1
+  register: pre1
+  ignore_errors: yes
+
+- shell: ls -d /x01/pre_post_checks/{{pre1.stdout}}
+  register: post
+
+- name: Collecting the file system details.
+  shell: df -hTP |egrep 'ext4|nfs|ocfs2'| awk -v OFS='\t\t' '{print $1,$2,$7}' | sort > "{{post.stdout}}"/df-h-post.txt
+
+- name: Collecting currently running service details(OEL6)
+  shell: /sbin/service --status-all 2>/dev/null | grep 'is running' | grep -v Check | awk '{print $1}' | sort > {{post.stdout}}/service-post
+  args:
+    warn: false
+  when: ansible_distribution_major_version == '6'
+
+- name: Collecting running service details (OEL7)
+  shell: /usr/bin/systemctl list-units --type service --all | grep active | grep running | sort > {{post.stdout}}/service-post
+  args:
+    warn: false
+  when: ansible_distribution_major_version == '7'
+

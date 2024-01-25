@@ -1,0 +1,37 @@
+---
+- name: Checking the file  /etc/oraInst.loc
+  stat:
+    path: /etc/oraInst.loc
+  register: file
+
+- name: Check whether it is Application server or Database."
+  shell: "grep ^inventory_loc /etc/oraInst.loc | awk -F'/' '{print $3}'"
+  register: APP_DB
+  when: file.stat.exists == True
+
+- name: Check whether the DB server is a single node or 2 node cluster
+  shell: "grep MGMTDB /etc/oratab | awk -F':' '{print $2}' | awk -F'/' '{print $NF}'"
+  register: CLUSTER_PATH
+  when: file.stat.exists == True and APP_DB.stdout == "ora"
+
+- name: Checking the CRS path
+  shell: "grep MGMTDB /etc/oratab | awk -F':' '{print $2}'"
+  register: CRS_PATH
+  when:
+    - APP_DB.stdout == "ora"
+    - CLUSTER_PATH.stdout == "crs"
+
+- name: Check CRS service status...
+  shell: "cd \"{{ CRS_PATH.stdout }}\"/bin && ./crsctl check crs"
+  register: CRS_STATUS
+  when:
+    - APP_DB.stdout == "ora"
+    - CLUSTER_PATH.stdout == "crs"
+
+- name: CRS service running status on {{ ansible_hostname }}
+  debug:
+    msg: "{{ CRS_STATUS.stdout.split('\n') }}"
+  when:
+    - APP_DB.stdout == "ora"
+    - CLUSTER_PATH.stdout == "crs"
+                

@@ -1,0 +1,5 @@
+---
+# vars file for precheck
+#vars:
+pre_folder: /x01/pre_post_checks/{{ansible_date_time.date}}
+s_name: "{{ansible_hostname}}"

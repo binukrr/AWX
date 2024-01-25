@@ -1,0 +1,19 @@
+---
+- name: Checking for latest pre_checks....
+  stat:
+    path: /x01/pre_post_checks/{{ansible_date_time.date}}/
+  register: result
+  ignore_errors: yes
+
+#- debug:
+#    msg: Server has latest pre-checks. Exiting playbook..
+#  when: result.stat.exists == True
+#
+#- meta: end_play
+#  when: result.stat.exists == True
+
+- name: Creating the directory for collecting pre-checks
+  file:
+    path: /x01/pre_post_checks/{{ansible_date_time.date}}
+    state: directory
+  when: result.stat.exists == False

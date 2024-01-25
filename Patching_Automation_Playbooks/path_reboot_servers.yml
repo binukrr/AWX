@@ -1,0 +1,15 @@
+---
+- name: Playbook for patch App servers. 
+  hosts: all
+  remote_user: svclnx
+  become: yes
+
+  tasks:
+    - name: Patch the servers
+      shell: /usr/sbin/rhn_check &> /dev/null
+      register: rhn_result
+
+    - name: Reboot the server {{ inventory_hostname }}
+      reboot:
+        reboot_timeout: 3600
+      when: rhn_result is changed

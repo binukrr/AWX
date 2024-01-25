@@ -1,0 +1,106 @@
+---
+#Compare pre and post file system details
+- name: Comparing Pre & Post file system mounts
+  shell: sdiff "{{post.stdout}}"/df-h_pre.txt "{{post.stdout}}"/df-h-post.txt | grep '<' | awk '{print $3}' 
+  register: diff_df
+
+- shell: if [ -z {{diff_df.stdout}} ]; then echo "df_match"; else echo "df_not_match";fi
+  register: df_stat
+
+- debug:
+    msg: "File system status looks good on {{ ansible_nodename }}"
+  when: df_stat.stdout == "df_match"
+
+- debug:
+    msg: "FILE SYSTEM {{ diff_df.stdout }}  NOT MOUNTED ON {{ ansible_nodename }}"
+  when: df_stat.stdout == "df_not_match"
+            
+#Compare pre and post service details (OEL6)
+- name: Comparing Pre & Post services (OEL6)
+  shell: sdiff "{{post.stdout}}"/service-pre "{{post.stdout}}"/service-post | grep '<' | awk '{print $1}'
+  register: diff_serv
+  when: ansible_distribution_major_version == '6'
+
+- shell: if [ -z {{ diff_serv.stdout }} ]; then echo "serv_match"; else echo "serv_not_match";fi
+  register: serv_stat_oel6
+  when: ansible_distribution_major_version == '6' 
+
+- debug:
+    msg: "Service status looks good on {{ ansible_nodename }}"
+  when: ansible_distribution_major_version == '6' and serv_stat_oel6.stdout == "serv_match"
+
+- debug: 
+    msg: "SERVICES {{diff_serv.stdout}} NOT STARTED ON {{ ansible_nodename }}"
+  when: ansible_distribution_major_version == '6' and serv_stat_oel6.stdout == "serv_not_match"
+
+#Compare pre and post service details (OEL7)
+
+- name: Comparing Pre & Post services (OEL7)
+  shell: sdiff "{{post.stdout}}"/service-pre "{{post.stdout}}"/service-post | grep '<' | awk '{print $1}' | cut -d '.' -f 1
+  register: diff_serv
+  when: ansible_distribution_major_version == '7'
+
+- shell: if [ -z {{ diff_serv.stdout }} ]; then echo "serv_match"; else echo "serv_not_match";fi
+  register: serv_stat_oel7
+  when: ansible_distribution_major_version == '7'
+
+
+- debug:
+    msg: "Service status looks good on {{ ansible_nodename }}"
+  when: ansible_distribution_major_version == '7' and serv_stat_oel7.stdout == "serv_match"
+
+- debug:
+    msg: "SERVICES {{diff_serv.stdout}} NOT STARTED ON {{ ansible_nodename }}"
+  when: ansible_distribution_major_version == '7' and serv_stat_oel7.stdout == "serv_not_match"
+
+# Compare pre and post resolv.conf entries.
+- name: Compare resolv.conf
+  shell: resolv_stat=$(diff "{{post.stdout}}"/resolv.conf_pre /etc/resolv.conf);
+         if [ -z $resolv_stat ]; then echo "resolv_match"; else echo "resolv_not_match";fi
+  register: diff_resolv
+
+- debug:
+    msg: "resolv.conf entries are OK on {{ ansible_nodename }}"
+  when: diff_resolv.stdout == "resolv_match"
+
+- debug:
+    msg: "RESOLV.CONF VALUES  ARE NOT MATCHING ON {{ ansible_nodename }}"
+  when: diff_resolv.stdout == "resolv_not_match"
+
+# Compare sysctl.conf values
+- name: Compare sysctl.conf
+  shell: sysctl_stat=$(diff "{{post.stdout}}"/sysctl.conf_pre /etc/sysctl.conf);
+         if [ -z $sysctl_stat ]; then echo "sysctl_match"; else echo "sysctl_not_match";fi
+  register: diff_sysctl
+
+- debug:
+    msg: "sysctl.conf values are matching on {{ ansible_nodename }}"
+  when: diff_sysctl.stdout == "sysctl_match"
+
+- debug:
+    msg: "SYSCTL VALUES ARE NOT MATCHING ON {{ ansible_nodename }}"
+  when: diff_sysctl.stdout == "sysctl_not_match"
+
+# checking the status of LSAM Service. 
+- name: Checking LSAM Service.
+  shell: /usr/sbin/lsof -i:3100
+  register: lsam_stat
+  ignore_errors: yes
+
+- debug:
+     msg: LSAM service is running on {{ ansible_hostname }}
+  when: lsam_stat.rc == 0
+
+- stat:
+    path: /usr/local/lsam/bin/lsam
+  register: file_lsam
+
+- debug:
+    msg: "LSAM SERVICE IS NOT RUNNING ON {{ ansible_hostname }}"
+  when: lsam_stat.rc != 0 and file_lsam.stat.exists == True
+  
+- debug:
+    msg: "LSAM is not configured on {{ ansible_hostname }}"
+  when: lsam_stat.rc != 0 and file_lsam.stat.exists != True
+  
+

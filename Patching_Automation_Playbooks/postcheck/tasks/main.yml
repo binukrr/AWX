@@ -1,0 +1,16 @@
+---
+# tasks file for postcheck
+- include: 1.post_checks_common.yml
+
+- import_tasks: 2.post_checks_physical.yml
+  when: ansible_system_vendor == 'HP' or ansible_system_vendor == 'HPE'
+
+- include: 3.post_check_result_common.yml
+
+- import_tasks: 4.post_check_result_phyiscal.yml
+  when: ansible_system_vendor == 'HP' or ansible_system_vendor == 'HPE'
+
+- import_tasks: 5.post_check_dbserver.yml
+  when: "'db0' in inventory_hostname"
+
+- import_tasks: 6.post_check_email_fail.yml
