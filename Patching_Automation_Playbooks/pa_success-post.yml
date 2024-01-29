@@ -1,7 +1,0 @@
----
-- name: Postcheck
-  hosts: all
-  remote_user: svclnx
-  become: yes
-  roles:
-    - postcheck

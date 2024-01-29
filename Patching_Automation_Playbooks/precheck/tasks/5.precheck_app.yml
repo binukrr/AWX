@@ -1,9 +1,0 @@
----
-- name: Checking service status on APP/CM nodes.
-  shell: ps -ef | grep -v root | wc -l
-  register: process_list
-
-- name: Service running status on {{ ansible_hostname }}
-  debug:
-    msg: "Suspecting service is running on {{ansible_hostname}}. Please login to the server and check"
-  when: process_list.stdout >= 20
