@@ -1,0 +1,14 @@
+---
+- name: Create a group and add a user
+  hosts: all
+  become: yes
+  tasks:
+    - name: Ensure the group exists
+      group:
+        name: dev
+        state: present
+    - name: Add user to the group
+      user:
+        name: simmons
+        groups: dev
+        append: yes

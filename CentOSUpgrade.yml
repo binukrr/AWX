@@ -1,6 +1,0 @@
----
-  - name: yum update centos
-    become: yes
-    hosts: all
-    roles:
-      - yum-update

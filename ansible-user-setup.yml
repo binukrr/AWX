@@ -1,0 +1,27 @@
+---
+- name: Ansible setup
+  hosts: all
+  become: yes
+
+  tasks:
+    - name: create the user ansible
+      user:
+        name: ansible
+        password: $6$keYHu.IWJw2KX38W$2bZRyLFUTpMmUsAhOlxoFSdVfwAzqHMYIlg70DbmitTXPlK2ubUrw8G9QUDLIIVmFmtN7i26sinAj22mBnvmB/
+        generate_ssh_key: yes
+        ssh_key_bits: 2048
+        ssh_key_file: .ssh/id_rsa
+        comment: Ansible User
+        create_home: yes
+
+    - name: Copy ansible ssh key to remote servers
+      authorized_key:
+        user: ansible
+        state: present
+        key: "{{ lookup('file', '/home/ansible/.ssh/id_rsa.pub') }}"
+
+    - name: Modify suders for admin privileges
+      lineinfile:
+        path: /etc/sudoers
+        backup: yes
+        line: 'ansible ALL=(ALL)       NOPASSWD: ALL'
