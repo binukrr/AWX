@@ -1,7 +1,6 @@
 ---
 - name: Display IP and hostname of the target machine
   hosts: all
-  become_user: ansible
 
   tasks:
     - name: Display IP & Hostname
